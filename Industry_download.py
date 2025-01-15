@@ -63,7 +63,7 @@ def fetch_industry_data(symbols):
             progress_text.text(f"Progress: {int(progress * 100)}%")
             
             # Add a short delay between requests
-            time.sleep(0.5)  # Adjust this time as necessary
+            time.sleep(0.1)  # Adjust this time as necessary
 
     return pd.DataFrame(industry_data)
 
