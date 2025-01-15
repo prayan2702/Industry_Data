@@ -13,11 +13,11 @@ U = st.selectbox('Select Universe:', universe, index=6)  # Default is 'AllNSE'
 
 # File path selection based on universe
 if U == 'N750':
-    file_path = 'https://raw.githubusercontent.com/prayan2702/Streamlit-momn/refs/heads/main/ind_niftytotalmarket_list.csv'
+    file_path = 'https://raw.githubusercontent.com/prayan2702/Industry_Data/refs/heads/main/ind_niftytotalmarket_list.csv'
 elif U == 'AllNSE':
-    file_path = f'https://raw.githubusercontent.com/prayan2702/Streamlit-momn/refs/heads/main/NSE_EQ_ALL.csv'
+    file_path = f'https://raw.githubusercontent.com/prayan2702/Industry_Data/refs/heads/main/NSE_EQ_ALL.csv'
 else:
-    file_path = f'https://raw.githubusercontent.com/prayan2702/Streamlit-momn/refs/heads/main/ind_{U.lower()}list.csv'
+    file_path = f'https://raw.githubusercontent.com/prayan2702/Industry_Data/refs/heads/main/ind_{U.lower()}list.csv'
 
 # Load stock data
 @st.cache_data(ttl=0)
