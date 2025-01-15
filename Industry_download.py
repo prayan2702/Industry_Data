@@ -41,6 +41,8 @@ def fetch_industry_data(symbols):
     
     # Initialize progress bar once
     progress_bar = st.progress(0)
+    progress_text = st.empty()  # Create an empty placeholder for the progress percentage text
+    
     for idx, symbol in enumerate(symbols):
         try:
             ticker = yf.Ticker(symbol)
@@ -53,7 +55,9 @@ def fetch_industry_data(symbols):
         # Update progress bar and show percentage in the same line
         progress = (idx + 1) / total_symbols
         progress_bar.progress(progress)  # Update progress bar
-        st.session_state.progress_text = f"{int(progress * 100)}%"  # Save percentage in session state
+        
+        # Update the percentage text dynamically on the same line
+        progress_text.text(f"Progress: {int(progress * 100)}%")  # Show percentage
 
     return pd.DataFrame(industry_data)
 
@@ -64,10 +68,6 @@ if st.button("Fetch Industry Data"):
 
     # Fetch industry data
     industry_df = fetch_industry_data(yahoo_symbols)
-
-    # Display the progress text
-    if 'progress_text' in st.session_state:
-        st.write(st.session_state.progress_text)  # Display percentage once, keeping it updated
 
     # Display results
     st.write("Fetched Industry Data:")
