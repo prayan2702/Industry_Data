@@ -50,11 +50,11 @@ def fetch_industry_data(symbols):
         except Exception as e:
             industry_data.append({"Company Name": "Error", "Symbol": symbol, "Industry": str(e)})
         
-        # Update progress bar and show percentage
+        # Update progress bar and show percentage in the same line
         progress = (idx + 1) / total_symbols
         progress_bar.progress(progress)  # Update progress bar
-        st.write(f"{int(progress * 100)}%")  # Show percentage in the same line
-        
+        st.session_state.progress_text = f"{int(progress * 100)}%"  # Save percentage in session state
+
     return pd.DataFrame(industry_data)
 
 # Start button to process data
@@ -64,6 +64,10 @@ if st.button("Fetch Industry Data"):
 
     # Fetch industry data
     industry_df = fetch_industry_data(yahoo_symbols)
+
+    # Display the progress text
+    if 'progress_text' in st.session_state:
+        st.write(st.session_state.progress_text)  # Display percentage once, keeping it updated
 
     # Display results
     st.write("Fetched Industry Data:")
