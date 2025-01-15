@@ -5,8 +5,8 @@ from io import BytesIO
 import time
 
 # Streamlit app title
-st.title("Industry Data Downloader for All NSE Stocks")
-st.write("Fetch industry data for the 'AllNSE' universe and download it as an Excel file.")
+st.title("Industry Data Downloader")
+st.write("Fetch industry data for Indices and download it as an Excel file.")
 
 # Universe selection
 universe = ['Nifty50', 'Nifty100', 'Nifty200', 'Nifty250', 'Nifty500', 'N750', 'AllNSE']
