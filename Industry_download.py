@@ -39,6 +39,8 @@ def fetch_industry_data(symbols):
     industry_data = []
     total_symbols = len(symbols)
     
+    # Initialize progress bar once
+    progress_bar = st.progress(0)
     for idx, symbol in enumerate(symbols):
         try:
             ticker = yf.Ticker(symbol)
@@ -50,8 +52,8 @@ def fetch_industry_data(symbols):
         
         # Update progress bar and show percentage
         progress = (idx + 1) / total_symbols
-        st.progress(progress)  # Update progress bar
-        st.write(f"{int(progress * 100)}%")  # Show percentage
+        progress_bar.progress(progress)  # Update progress bar
+        st.write(f"{int(progress * 100)}%")  # Show percentage in the same line
         
     return pd.DataFrame(industry_data)
 
@@ -59,9 +61,6 @@ def fetch_industry_data(symbols):
 if st.button("Fetch Industry Data"):
     st.write("Fetching industry data. This may take some time...")
     yahoo_symbols = stock_data['Yahoo_Symbol'].tolist()
-
-    # Initialize progress bar
-    st.progress(0)
 
     # Fetch industry data
     industry_df = fetch_industry_data(yahoo_symbols)
