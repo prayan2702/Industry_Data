@@ -39,33 +39,38 @@ except Exception as e:
 def fetch_industry_data(symbols):
     industry_data = []
     total_symbols = len(symbols)
-    
+    chunk_size = 50  # Process in chunks of 50
     progress_bar = st.progress(0)
     progress_text = st.empty()
 
-    for idx, symbol in enumerate(symbols):
-        retry_attempts = 0
-        while retry_attempts < 3:  # Retry up to 3 times
-            try:
-                ticker = yf.Ticker(symbol)
-                company_name = ticker.info.get("longName", "N/A")
-                industry = ticker.info.get("industry", "N/A")
-                industry_data.append({"Company Name": company_name, "Symbol": symbol, "Industry": industry})
-                break  # Break out of retry loop if successful
-            except Exception as e:
-                retry_attempts += 1
-                st.warning(f"Attempt {retry_attempts} failed for {symbol}. Retrying...")
-                time.sleep(0.5)  # Wait for 0.5 seconds before retrying
-                if retry_attempts == 3:
-                    industry_data.append({"Company Name": "Error", "Symbol": symbol, "Industry": "Too many requests. Retried 3 times."})
-        
-        # Update progress bar and text
-        progress = (idx + 1) / total_symbols
-        progress_bar.progress(progress)
-        progress_text.text(f"Progress: {int(progress * 100)}%")
-        
-        # Add a delay to avoid hitting the rate limit
-        time.sleep(0.5)  # Adjust this time as necessary
+    # Process in chunks
+    for start_idx in range(0, total_symbols, chunk_size):
+        end_idx = min(start_idx + chunk_size, total_symbols)
+        chunk = symbols[start_idx:end_idx]
+
+        for idx, symbol in enumerate(chunk):
+            retry_attempts = 0
+            while retry_attempts < 3:  # Retry up to 3 times
+                try:
+                    ticker = yf.Ticker(symbol)
+                    company_name = ticker.info.get("longName", "N/A")
+                    industry = ticker.info.get("industry", "N/A")
+                    industry_data.append({"Company Name": company_name, "Symbol": symbol, "Industry": industry})
+                    break  # Break out of retry loop if successful
+                except Exception as e:
+                    retry_attempts += 1
+                    st.warning(f"Attempt {retry_attempts} failed for {symbol}. Retrying...")
+                    time.sleep(5)  # Wait for 5 seconds before retrying
+                    if retry_attempts == 3:
+                        industry_data.append({"Company Name": "Error", "Symbol": symbol, "Industry": "Too many requests. Retried 3 times."})
+            
+            # Update progress bar and text for current chunk
+            progress = (start_idx + idx + 1) / total_symbols
+            progress_bar.progress(progress)
+            progress_text.text(f"Progress: {int(progress * 100)}%")
+            
+            # Add a short delay between requests
+            time.sleep(0.5)  # Adjust this time as necessary
 
     return pd.DataFrame(industry_data)
 
