@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import yfinance as yf
 from io import BytesIO
+import time
 
 # Streamlit app title
 st.title("Industry Data Downloader for All NSE Stocks")
@@ -39,25 +40,32 @@ def fetch_industry_data(symbols):
     industry_data = []
     total_symbols = len(symbols)
     
-    # Initialize progress bar once
     progress_bar = st.progress(0)
-    progress_text = st.empty()  # Create an empty placeholder for the progress percentage text
-    
+    progress_text = st.empty()
+
     for idx, symbol in enumerate(symbols):
-        try:
-            ticker = yf.Ticker(symbol)
-            company_name = ticker.info.get("longName", "N/A")
-            industry = ticker.info.get("industry", "N/A")
-            industry_data.append({"Company Name": company_name, "Symbol": symbol, "Industry": industry})
-        except Exception as e:
-            industry_data.append({"Company Name": "Error", "Symbol": symbol, "Industry": str(e)})
+        retry_attempts = 0
+        while retry_attempts < 3:  # Retry up to 3 times
+            try:
+                ticker = yf.Ticker(symbol)
+                company_name = ticker.info.get("longName", "N/A")
+                industry = ticker.info.get("industry", "N/A")
+                industry_data.append({"Company Name": company_name, "Symbol": symbol, "Industry": industry})
+                break  # Break out of retry loop if successful
+            except Exception as e:
+                retry_attempts += 1
+                st.warning(f"Attempt {retry_attempts} failed for {symbol}. Retrying...")
+                time.sleep(5)  # Wait for 5 seconds before retrying
+                if retry_attempts == 3:
+                    industry_data.append({"Company Name": "Error", "Symbol": symbol, "Industry": "Too many requests. Retried 3 times."})
         
-        # Update progress bar and show percentage in the same line
+        # Update progress bar and text
         progress = (idx + 1) / total_symbols
-        progress_bar.progress(progress)  # Update progress bar
+        progress_bar.progress(progress)
+        progress_text.text(f"Progress: {int(progress * 100)}%")
         
-        # Update the percentage text dynamically on the same line
-        progress_text.text(f"Progress: {int(progress * 100)}%")  # Show percentage
+        # Add a delay to avoid hitting the rate limit
+        time.sleep(1)  # Adjust this time as necessary
 
     return pd.DataFrame(industry_data)
 
@@ -73,9 +81,6 @@ if st.button("Fetch Industry Data"):
     st.write("Fetched Industry Data:")
     st.dataframe(industry_df)
 
-    # Dynamically generate the file name based on the selected universe
-    file_name = f"{U}_Industry_Data.xlsx"
-
     # Download button for Excel
     output = BytesIO()
     with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
@@ -83,6 +88,6 @@ if st.button("Fetch Industry Data"):
     st.download_button(
         label="Download Industry Data as Excel",
         data=output.getvalue(),
-        file_name=file_name,
+        file_name=f"{U}_Industry_Data.xlsx",  # File name based on universe
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
