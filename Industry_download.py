@@ -37,7 +37,9 @@ except Exception as e:
 # Fetch industry data
 def fetch_industry_data(symbols):
     industry_data = []
-    for symbol in symbols:
+    total_symbols = len(symbols)
+    
+    for idx, symbol in enumerate(symbols):
         try:
             ticker = yf.Ticker(symbol)
             company_name = ticker.info.get("longName", "N/A")
@@ -45,12 +47,20 @@ def fetch_industry_data(symbols):
             industry_data.append({"Company Name": company_name, "Symbol": symbol, "Industry": industry})
         except Exception as e:
             industry_data.append({"Company Name": "Error", "Symbol": symbol, "Industry": str(e)})
+        
+        # Update progress bar
+        progress = (idx + 1) / total_symbols
+        st.progress(progress)  # Update progress bar
+        
     return pd.DataFrame(industry_data)
 
 # Start button to process data
 if st.button("Fetch Industry Data"):
     st.write("Fetching industry data. This may take some time...")
     yahoo_symbols = stock_data['Yahoo_Symbol'].tolist()
+
+    # Initialize progress bar
+    progress_bar = st.progress(0)
 
     # Fetch industry data
     industry_df = fetch_industry_data(yahoo_symbols)
@@ -59,6 +69,9 @@ if st.button("Fetch Industry Data"):
     st.write("Fetched Industry Data:")
     st.dataframe(industry_df)
 
+    # Dynamically generate the file name based on the selected universe
+    file_name = f"{U}_Industry_Data.xlsx"
+
     # Download button for Excel
     output = BytesIO()
     with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
@@ -66,6 +79,6 @@ if st.button("Fetch Industry Data"):
     st.download_button(
         label="Download Industry Data as Excel",
         data=output.getvalue(),
-        file_name="AllNSE_Industry_Data.xlsx",
+        file_name=file_name,
         mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     )
