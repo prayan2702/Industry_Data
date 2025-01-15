@@ -49,20 +49,13 @@ def fetch_industry_data(symbols):
         chunk = symbols[start_idx:end_idx]
 
         for idx, symbol in enumerate(chunk):
-            retry_attempts = 0
-            while retry_attempts < 3:  # Retry up to 3 times
-                try:
-                    ticker = yf.Ticker(symbol)
-                    company_name = ticker.info.get("longName", "N/A")
-                    industry = ticker.info.get("industry", "N/A")
-                    industry_data.append({"Company Name": company_name, "Symbol": symbol, "Industry": industry})
-                    break  # Break out of retry loop if successful
-                except Exception as e:
-                    retry_attempts += 1
-                    st.warning(f"Attempt {retry_attempts} failed for {symbol}. Retrying...")
-                    time.sleep(5)  # Wait for 5 seconds before retrying
-                    if retry_attempts == 3:
-                        industry_data.append({"Company Name": "Error", "Symbol": symbol, "Industry": "Too many requests. Retried 3 times."})
+            try:
+                ticker = yf.Ticker(symbol)
+                company_name = ticker.info.get("longName", "N/A")
+                industry = ticker.info.get("industry", "N/A")
+                industry_data.append({"Company Name": company_name, "Symbol": symbol, "Industry": industry})
+            except Exception as e:
+                industry_data.append({"Company Name": "Error", "Symbol": symbol, "Industry": str(e)})
             
             # Update progress bar and text for current chunk
             progress = (start_idx + idx + 1) / total_symbols
