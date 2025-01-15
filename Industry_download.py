@@ -55,7 +55,7 @@ def fetch_industry_data(symbols):
             except Exception as e:
                 retry_attempts += 1
                 st.warning(f"Attempt {retry_attempts} failed for {symbol}. Retrying...")
-                time.sleep(5)  # Wait for 5 seconds before retrying
+                time.sleep(0.5)  # Wait for 0.5 seconds before retrying
                 if retry_attempts == 3:
                     industry_data.append({"Company Name": "Error", "Symbol": symbol, "Industry": "Too many requests. Retried 3 times."})
         
@@ -65,7 +65,7 @@ def fetch_industry_data(symbols):
         progress_text.text(f"Progress: {int(progress * 100)}%")
         
         # Add a delay to avoid hitting the rate limit
-        time.sleep(1)  # Adjust this time as necessary
+        time.sleep(0.5)  # Adjust this time as necessary
 
     return pd.DataFrame(industry_data)
 
