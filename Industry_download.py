@@ -35,8 +35,8 @@ try:
 except Exception as e:
     st.error(f"Failed to fetch stock list: {e}")
 
-# Fetch industry data
-def fetch_industry_data(symbols):
+# Retry logic for failed requests
+def fetch_industry_data(symbols, max_retries=3):
     industry_data = []
     total_symbols = len(symbols)
     chunk_size = 50  # Process in chunks of 50
@@ -49,18 +49,31 @@ def fetch_industry_data(symbols):
         chunk = symbols[start_idx:end_idx]
 
         for idx, symbol in enumerate(chunk):
-            try:
-                ticker = yf.Ticker(symbol)
-                company_name = ticker.info.get("longName", "N/A")
-                industry = ticker.info.get("industry", "N/A")
-                industry_data.append({"Company Name": company_name, "Symbol": symbol, "Industry": industry})
-            except Exception as e:
-                industry_data.append({"Company Name": "Error", "Symbol": symbol, "Industry": str(e)})
-            
-            # Update progress bar and text for current chunk
-            progress = (start_idx + idx + 1) / total_symbols
-            progress_bar.progress(progress)
-            progress_text.text(f"Progress: {int(progress * 100)}%")
+            retries = 0
+            success = False
+            while retries < max_retries and not success:
+                try:
+                    ticker = yf.Ticker(symbol)
+                    company_name = ticker.info.get("longName", "N/A")
+                    industry = ticker.info.get("industry", "N/A")
+                    industry_data.append({"Company Name": company_name, "Symbol": symbol, "Industry": industry})
+                    success = True  # Mark success if no error occurs
+                except (yf.YahooFinanceError, KeyError) as e:
+                    industry_data.append({"Company Name": "Error", "Symbol": symbol, "Industry": str(e)})
+                    success = True  # Mark success on non-retryable error
+                except Exception as e:
+                    if 'Too Many Requests' in str(e) or 'Unauthorized' in str(e):
+                        retries += 1
+                        st.write(f"Retrying {symbol}... ({retries}/{max_retries})")
+                        time.sleep(1)  # Retry delay
+                    else:
+                        industry_data.append({"Company Name": "Error", "Symbol": symbol, "Industry": str(e)})
+                        success = True  # Mark success for non-retryable errors
+
+                # Update progress bar and text for current chunk
+                progress = (start_idx + idx + 1) / total_symbols
+                progress_bar.progress(progress)
+                progress_text.text(f"Progress: {int(progress * 100)}%")
             
             # Add a short delay between requests
             time.sleep(0.1)  # Adjust this time as necessary
@@ -75,11 +88,14 @@ if st.button("Fetch Industry Data"):
     # Fetch industry data
     industry_df = fetch_industry_data(yahoo_symbols)
 
+    # Remove the ".NS" suffix for the 'Symbol' column in the table display
+    industry_df['Symbol'] = industry_df['Symbol'].str.replace('.NS', '', regex=False)
+
     # Display results
     st.write("Fetched Industry Data:")
     st.dataframe(industry_df)
 
-    # Download button for Excel
+    # Download button for Excel (keep '.NS' suffix in the download file)
     output = BytesIO()
     with pd.ExcelWriter(output, engine="xlsxwriter") as writer:
         industry_df.to_excel(writer, index=False, sheet_name="Industry Data")
